@@ -1,0 +1,51 @@
+//http://www.dfrobot.com/wiki/index.php?title=Arduino_LCD_KeyPad_Shield_(SKU:_DFR0009)
+
+//Sample using LiquidCrystal library
+#include <LiquidCrystal.h>
+
+// select the pins used on the LCD panel
+LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
+// define values 
+int lcd_key = 0;
+int adc_key_in = 0;
+
+void setup()
+{
+lcd.begin(16, 2); // initialise lcd
+lcd.setCursor(0,0);
+lcd.print("Push the buttons"); // print message
+}
+
+void loop()
+{
+lcd.setCursor(9,1); // place cursor
+lcd.print(millis()/1000); // display seconds 
+lcd.setCursor(0,1); // move cursor
+lcd_key = analogRead(0); // read the buttons
+
+// recognize pressed button and display its label 
+if (lcd_key<50) 
+{
+lcd.print("RIGHT ");
+} else
+if (lcd_key<250)
+{
+lcd.print("UP ");
+} else
+if (lcd_key<450)
+{
+lcd.print("DOWN ");
+} else
+if (lcd_key<650)
+{
+lcd.print("LEFT ");
+} else
+if (lcd_key<850)
+{
+lcd.print("SELECT");
+} else
+if (lcd_key>875)
+{
+lcd.print("NONE ");
+}
+}
