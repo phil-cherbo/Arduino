@@ -1,0 +1,352 @@
+#include <Adafruit_GFX.h>    // Core graphics library
+#include <Adafruit_TFTLCD.h> // Hardware-specific library
+#include <TouchScreen.h>
+
+int x1,x2,c1,result,sw=0;
+
+// These are the pins for the shield!
+#define YP A1  // must be an analog pin, use "An" notation!
+#define XM A2  // must be an analog pin, use "An" notation!
+#define YM 7   // can be a digital pin
+#define XP 6   // can be a digital pin
+
+#define TS_MINX 173
+#define TS_MINY 146
+#define TS_MAXX 831
+#define TS_MAXY 889
+
+// For better pressure precision, we need to know the resistance
+// between X+ and X- Use any multimeter to read it
+// For the one we're using, its 300 ohms across the X plate
+
+//PCH
+//TouchScreen ts = TouchScreen(XP, YP, XM, YM, 330);
+TouchScreen ts = TouchScreen(XP, YP, XM, YM, 300);
+
+#define LCD_CS A3
+#define LCD_CD A2
+#define LCD_WR A1
+#define LCD_RD A0
+#define LCD_RESET A4
+#define SD_CS 10
+
+// Assign human-readable names to some common 16-bit color values:
+#define BLACK   0x0000
+#define BLUE    0x001F
+#define RED     0xF800
+#define GREEN   0x07E0
+#define CYAN    0x07FF
+#define MAGENTA 0xF81F
+#define YELLOW  0xFFE0
+#define WHITE   0xFFFF
+#define ORANGE  0xFBE0
+#define LGRAY   0xBDF7
+#define DGRAY   0x7BEF
+#define BROWN   0x79E0
+
+Adafruit_TFTLCD tft(LCD_CS, LCD_CD, LCD_WR, LCD_RD, LCD_RESET);
+
+#define BOXSIZE 50
+#define PENRADIUS 3
+int oldcolor, currentcolor;
+int ics; 
+
+
+
+void setup(void) {
+  Serial.begin(9600);
+  tft.reset();
+
+  uint16_t identifier = tft.readID();
+
+//PCH: taken from adafruit lcd example
+  if(identifier == 0x9325) {
+    //progmemPrintln(PSTR("Found ILI9325 LCD driver"));
+  } else if(identifier == 0x9328) {
+    //progmemPrintln(PSTR("Found ILI9328 LCD driver"));
+  } else if(identifier == 0x7575) {
+    //progmemPrintln(PSTR("Found HX8347G LCD driver"));
+  } else {
+//    //progmemPrint(PSTR("Unknown LCD driver chip: "));
+//    Serial.println(identifier, HEX);
+//    return;
+  }
+
+  //PCH: Identifier read is "0xC0C0"
+  Serial.println(identifier, HEX);
+
+  //PCH: Identifier forced to this value ???
+  identifier=0x9341;
+
+  tft.begin(identifier);
+
+
+
+
+
+  tft.fillScreen(BLACK);
+//PCH: rotation was uncorrect
+//   tft.setRotation(3); // landscape 320*240 , mode 2 = 240*320
+//PCH: rotation 180deg
+//   tft.setRotation(2); // portrait 320*240 , mode 2 = 240*320
+  
+  tft.setCursor(30, 140);
+  tft.setTextColor(WHITE);
+  tft.setTextSize(3);
+  tft.println("LOADING...");
+  delay(1000);
+  
+  tft.fillScreen(BLACK);
+  
+  tft.fillRect(10, 20, BOXSIZE, BOXSIZE, ORANGE);
+  tft.fillRect(10, 75, BOXSIZE, BOXSIZE, ORANGE);
+  tft.fillRect(10, 130, BOXSIZE, BOXSIZE, ORANGE);
+  tft.fillRect(65, 20, BOXSIZE, BOXSIZE, ORANGE);
+  tft.fillRect(65,75, BOXSIZE, BOXSIZE, ORANGE);
+  tft.fillRect(65, 130, BOXSIZE, BOXSIZE, ORANGE);
+  tft.fillRect(65, 185, BOXSIZE, BOXSIZE,  ORANGE);
+  tft.fillRect(120, 20, BOXSIZE, BOXSIZE, ORANGE);
+  tft.fillRect(120,75, BOXSIZE, BOXSIZE, ORANGE);
+  tft.fillRect(120, 130, BOXSIZE, BOXSIZE, ORANGE);
+  tft.fillRect(120, 185, BOXSIZE, BOXSIZE,  LGRAY);
+  tft.fillRect(175, 20, BOXSIZE, BOXSIZE, BROWN);
+  tft.fillRect(175,75, BOXSIZE, BOXSIZE, PURPLE);
+  tft.fillRect(175, 130, BOXSIZE, BOXSIZE, RED);
+  tft.fillRect(175, 185, BOXSIZE, BOXSIZE,  BLUE);
+  
+   tft.fillRect(0, 255, 240, 50,  WHITE);
+  num();
+
+
+
+pinMode(13,OUTPUT);  
+
+
+}
+
+//PCH
+//#define MINPRESSURE 100
+#define MINPRESSURE 10
+#define MAXPRESSURE 1000
+
+void loop()
+{
+  digitalWrite(13, HIGH);
+  // Recently Point was renamed TSPoint in the TouchScreen library
+  // If you are using an older version of the library, use the
+  // commented definition instead.
+  // Point p = ts.getPoint();
+  TSPoint p = ts.getPoint();
+
+  digitalWrite(13,LOW);
+  
+  // if sharing pins, you'll need to fix the directions of the touchscreen pins
+  // the touchscreen swaps them back and forth between input and output multiple times
+  pinMode(XP, OUTPUT);
+  pinMode(XM, OUTPUT);
+  pinMode(YP, OUTPUT);
+  pinMode(YM, OUTPUT);
+  
+  // we have some minimum pressure we consider 'valid'
+  // pressure of 0 means no pressing!
+
+  if (p.z > MINPRESSURE && p.z < MAXPRESSURE) {
+  
+
+p.x = map(p.x, TS_MINX, TS_MAXX, 240, 0); 
+p.y = map(p.y, TS_MINY, TS_MAXY, 320, 0); 
+
+Serial.println(p.x);
+Serial.println(p.y);
+
+
+    if ( p.x > 10 && p.x < 70 && p.y > 15 && p.y < 70 )
+    {
+      
+ if(sw==0) {
+   x1=1;
+ }
+ else if(sw==1) {x2=1;}
+    }
+    
+   else  if ( p.x > 70 && p.x < 130 && p.y > 15 && p.y < 70 )
+    {
+      
+  if(sw==0) {
+   x1=2;
+ }
+ else if(sw==1) {x2=2;}
+ 
+    }
+    
+     else  if ( p.x > 130 && p.x < 190 && p.y > 15 && p.y < 70 )
+    {
+      
+  if(sw==0) {
+   x1=3;
+ }
+ else if(sw==1) {x2=3;}
+ 
+ 
+    }
+    
+     else  if ( p.x > 190 && p.x < 240 && p.y > 15 && p.y < 70 )
+    {
+        sw=1;
+ c1=4;
+    }
+    
+     else  if ( p.x > 10 && p.x < 70 && p.y > 70 && p.y < 130 )
+    {
+
+  if(sw==0) {
+   x1=4;
+ }
+ else if(sw==1) {x2=4;}
+ 
+    }
+    
+     else  if ( p.x > 70 && p.x < 130 && p.y > 70 && p.y < 130 )
+    {
+     
+  if(sw==0) {
+   x1=5;
+ }
+ else if(sw==1) {x2=5;}
+ 
+    }
+    
+     else  if ( p.x > 130 && p.x < 190 && p.y > 70 && p.y < 130 )
+    {
+ 
+  if(sw==0) {
+   x1=6;
+ }
+ else if(sw==1) {x2=6;}
+ 
+    }
+    
+     else  if ( p.x > 190 && p.x < 240 && p.y > 70 && p.y < 130 )
+    {
+        sw=1;
+ c1=3;
+    }
+    
+      else  if ( p.x > 10 && p.x < 70 && p.y > 130 && p.y < 190 )
+    {
+        if(sw==0) {
+   x1=7;
+ }
+ else if(sw==1) {x2=7;}
+    }
+    
+     else  if ( p.x > 70 && p.x < 130&& p.y > 130 && p.y < 190 )
+    {
+        if(sw==0) {
+   x1=8;
+ }
+ else if(sw==1) {x2=8;}
+    }
+    
+     else  if ( p.x > 130 && p.x < 190 && p.y > 130 && p.y < 190 )
+    {
+       if(sw==0) {
+   x1=9;
+ }
+ else if(sw==1) {x2=9;}
+    }
+    
+     else  if ( p.x > 190 && p.x < 240 && p.y > 130 && p.y < 190 )
+    {
+ sw=1;
+ c1=1;
+ 
+    }
+    
+       else  if ( p.x > 0 && p.x < 240 && p.y > 270 && p.y < 320 )
+    {
+     
+       sw=0;
+       c1=0;
+    }
+    
+     else  if ( p.x > 70 && p.x < 130 && p.y > 190 && p.y < 240 )
+    {
+       if(sw==0) {
+   x1=0;
+ }
+ else if(sw==1) {x2=0;}
+    }
+    
+     else  if ( p.x > 130 && p.x < 190 && p.y > 190 && p.y < 240 )
+    {
+  sw=0;
+ if(c1==1) {result=x1-x2;}
+else if(c1==2) {result=x1+x2;}
+else if(c1==3) {result=x1*x2;}
+else if(c1==4) {result=x1/x2;}
+ tft.setTextColor(BLACK);
+ tft.setTextSize(4);
+  tft.setCursor(90, 260);
+ tft.println(result);
+ 
+    }
+    
+     else  if ( p.x > 190 && p.x < 240 && p.y > 190 && p.y < 240 )
+    {
+        sw=1;
+ c1=2;
+    }
+    
+   
+ }
+  
+}
+
+void num() {
+
+ tft.drawLine(0,240,240,240,WHITE);
+ tft.drawLine(0,15,240,15,WHITE);
+ tft.drawLine(172,15,172,182,WHITE);
+ tft.drawLine(117,182,172,182,WHITE);
+ tft.drawLine(117,182,117,240,WHITE);
+  
+ tft.setTextColor(WHITE);
+ tft.setTextSize(4);
+ tft.setCursor(25, 30);
+ tft.println("1");
+ tft.setCursor(80, 30);
+ tft.println("2");
+ tft.setCursor(135, 30);
+ tft.println("3");
+ tft.setCursor(190, 30);
+ tft.println("/");
+ 
+ tft.setCursor(25, 85);
+ tft.println("4");
+ tft.setCursor(80, 85);
+ tft.println("5");
+ tft.setCursor(135, 85);
+ tft.println("6");
+ tft.setCursor(190, 85);
+ tft.println("x");
+ 
+ tft.setCursor(25, 140);
+ tft.println("7");
+ tft.setCursor(80, 140);
+ tft.println("8");
+ tft.setCursor(135, 140);
+ tft.println("9");
+ tft.setCursor(190, 140);
+ tft.println("-");
+ 
+
+ tft.setCursor(80, 195);
+ tft.println("0");
+ tft.setCursor(135, 195);
+ tft.println("=");
+ tft.setCursor(190, 195);
+ tft.println("+");
+  
+  
+}
